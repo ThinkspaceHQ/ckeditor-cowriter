@@ -57,7 +57,6 @@ CKEDITOR.dialog.add('cowriterDialog', function (editor) {
                                 if (this.readyState === 4) {
                                     if (this.status === 200) {
                                         const response = JSON.parse(this.responseText);
-                                        console.log(response)
                                         const choices = response.choices;
                                         let completeText = choices
                                             .map(choice => `<p>${escapeHtml(choice.message.content)}</p>`)
