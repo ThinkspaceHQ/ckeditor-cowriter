@@ -2,7 +2,7 @@
 CKEDITOR.dialog.add('cowriterDialog', function (editor) {
 
     // Settings
-    let select_model = 'text-davinci-003',
+    let select_model = 'gpt-4',
         select_temperature = 0.5,
         select_max_tokens = 4000,
         select_amount = 1;
@@ -36,7 +36,7 @@ CKEDITOR.dialog.add('cowriterDialog', function (editor) {
 
                             // Use XMLHttpRequest to get the text from openai api.
                             var xhr = new XMLHttpRequest()
-                            xhr.open('POST', 'https://api.openai.com/v1/completions', true)
+                            xhr.open('POST', 'https://api.openai.com/v1/chat/completions', true)
                             xhr.setRequestHeader('Content-Type', 'application/json')
 
 
@@ -46,25 +46,22 @@ CKEDITOR.dialog.add('cowriterDialog', function (editor) {
 
                             // Send the request and set status to element in editor.
                             xhr.send(JSON.stringify({
-                                prompt: this.getValue(), // Text to complete
+                                messages: [{role: "user", content: this.getValue()}], // Text to complete
                                 max_tokens: select_max_tokens, // 1 to 4000
-                                model: select_model, // 'text-davinci-003', 'text-curie-001', 'text-babbage-001', 'text-ada-001'
+                                model: select_model,
                                 temperature: select_temperature, // 0.0 is equivalent to greedy sampling
-                                top_p: 1, // 1.0 is equivalent to greedy sampling
                                 n: select_amount, // Number of results to return
-                                frequency_penalty: 0, // 0.0 is equivalent to no penalty
-                                presence_penalty: 0, // 0.0 is equivalent to no penalty
                             }))
 
                             xhr.onreadystatechange = function () {
                                 if (this.readyState === 4) {
                                     if (this.status === 200) {
-                                        // Set text from openai api to element in editor if it is not empty.
-                                        let completeText = '',
-                                            choices = JSON.parse(this.responseText).choices;
-                                        for (let i = 0; i < choices.length; i++) {
-                                            completeText += '<p>' + escapeHtml(choices[i].text) + '</p>';
-                                        }
+                                        const response = JSON.parse(this.responseText);
+                                        console.log(response)
+                                        const choices = response.choices;
+                                        let completeText = choices
+                                            .map(choice => `<p>${escapeHtml(choice.message.content)}</p>`)
+                                            .join("");
                                         element.setHtml(completeText);
                                     } else {
                                         element.setText(' Error: ' + this.responseText)
@@ -90,12 +87,10 @@ CKEDITOR.dialog.add('cowriterDialog', function (editor) {
                         id: 'model',
                         title: editor.lang.cowriter.modelSelction,
                         label: editor.lang.cowriter.modelSelctionLabel,
-                        default: 'text-davinci-003',
+                        default: "gpt-4",
                         items: [
-                            ['Davinci', 'text-davinci-003'],
-                            ['Curie', 'text-curie-001'],
-                            ['Babbage', 'text-babbage-001'],
-                            ['Ada', 'text-ada-001']
+                            ["GPT-4", "gpt-4"],
+                            ["GPT-3.5", "gpt-3.5-turbo"]
                         ],
                         setup: function (element) {
                             this.setValue(element.getText())
@@ -161,17 +156,11 @@ CKEDITOR.dialog.add('cowriterDialog', function (editor) {
             select_amount = parseInt(dialog.getValueOf('tab-advanced', 'amount'));
             // set max_tokens according to chosen model
             switch(select_model) {
-                case 'text-davinci-003':
+                case 'gpt-4':
                     select_max_tokens = 4000;
                     break;
-                case 'text-curie-001':
-                    select_max_tokens = 2000;
-                    break;
-                case 'text-babbage-001':
-                    select_max_tokens = 2000;
-                    break;
-                case 'text-ada-001':
-                    select_max_tokens = 2000;
+                case 'gpt-3.5-turbo':
+                    select_max_tokens = 4000;
                     break;
                 default:
                     select_max_tokens = 4000;
